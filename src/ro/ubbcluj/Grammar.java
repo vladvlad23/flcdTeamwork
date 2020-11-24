@@ -13,7 +13,7 @@ public class Grammar {
 
     private Set<String> nonTerminals;
     private Set<String> terminals;
-    private Set<SyntacticalRule> syntacticalRules;
+    private List<SyntacticalRule> syntacticalRules;
     private String syntacticalConstruct;
 
 
@@ -22,6 +22,7 @@ public class Grammar {
         private List<String> rightSide;
 
         public SyntacticalRule() {
+            //ThisCommentIsNeededForMe
         }
 
         public String getLeftSide() {
@@ -53,7 +54,7 @@ public class Grammar {
                 syntacticalRule.setRightSide(ruleSplit[1].codePoints()
                         .mapToObj(c -> String.valueOf((char) c)).collect(Collectors.toList()));
                 return syntacticalRule;
-            }).collect(Collectors.toSet());
+            }).collect(Collectors.toList());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -75,11 +76,11 @@ public class Grammar {
         this.terminals = terminals;
     }
 
-    public Set<SyntacticalRule> getSyntacticalRules() {
+    public List<SyntacticalRule> getSyntacticalRules() {
         return syntacticalRules;
     }
 
-    public void setSyntacticalRules(Set<SyntacticalRule> syntacticalRules) {
+    public void setSyntacticalRules(List<SyntacticalRule> syntacticalRules) {
         this.syntacticalRules = syntacticalRules;
     }
 
