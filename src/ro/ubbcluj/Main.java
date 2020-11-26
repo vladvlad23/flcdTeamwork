@@ -6,5 +6,7 @@ public class Main {
         Grammar grammar = new Grammar();
         grammar.readFiniteAutomataFromFile("g1.txt");
         System.out.println("ceva");
+        
+        //todo prepare tests, basic examples and shtuff
     }
 }
