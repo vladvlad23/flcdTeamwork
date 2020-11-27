@@ -5,15 +5,12 @@ import java.util.Objects;
 import java.util.OptionalInt;
 import java.util.Stack;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
-
-import org.graalvm.compiler.graph.Node.OptionalInput;
 
 import ro.ubbcluj.Grammar.SyntacticalRule;
 
 public class FormalModel {
-    private Grammar grammar;
-    private State state;
+    private final Grammar grammar;
+    private final State state;
     private List<String> inputString;
 
     public FormalModel(Grammar grammar, List<String> inputString) {
@@ -71,83 +68,74 @@ public class FormalModel {
 
 
     public void expand() {
-        if (grammar.getNonTerminals().contains(state.getInputStack().peek())) {
-            grammar.getSyntacticalRules();
+        List<Grammar.SyntacticalRule> syntacticalRules = grammar.getSyntacticalRules();
 
-            OptionalInt indexOfRule = IntStream.range(0, grammar.getSyntacticalRules().size())
-            .filter(index -> Objects.equals(grammar.getSyntacticalRules().get(index).getLeftSide(), state.getInputStack().peek()))
-            .findFirst();
+        OptionalInt indexOfRule = IntStream.range(0, syntacticalRules.size())
+        .filter(index -> Objects.equals(syntacticalRules.get(index).getLeftSide(), state.getInputStack().peek()))
+        .findFirst();
 
-            Grammar.SyntacticalRule ruleToBeUsed = grammar.getSyntacticalRules().get(indexOfRule.getAsInt());
+        Grammar.SyntacticalRule ruleToBeUsed = syntacticalRules.get(indexOfRule.getAsInt());
 
-            ruleToBeUsed.getRightSide().forEach(symbol -> {
-                state.getInputStack().push(symbol);
-            });
+        ruleToBeUsed.getRightSide().forEach(symbol -> {
+            state.getInputStack().push(symbol);
+        });
 
-            state.getInputStack().push("-"+indexOfRule+"-");
-        }
+        state.getInputStack().push("-"+indexOfRule+"-");
     }
 
     public void advance() {
-        if (grammar.getTerminals().contains(state.getInputStack().peek()) && 
-        state.getInputStack().peek().equals(inputString.get(state.position))) {
-            
-            state.setPosition(state.getPosition() + 1);
-            state.getWorkingStack().push(state.getInputStack().pop());
-        }
+        state.setPosition(state.getPosition() + 1);
+        state.getWorkingStack().push(state.getInputStack().pop());
     }
 
 
-    public void monentaryInsuccess() {
-        if (grammar.getTerminals().contains(state.getInputStack().peek()) && 
-        !state.getInputStack().peek().equals(inputString.get(state.position))) {
-            
-            state.setStatus("b");
-        }
+    public void momentaryInsuccess() {
+        state.setStatus("b");
     }
 
     public void back() {
-        if (Objects.equals(state.getStatus(), "b")
-        && grammar.getTerminals().contains(state.getWorkingStack().peek())) {
-            
-            state.setPosition(state.getPosition() - 1);
-            state.getInputStack().push(state.getWorkingStack().pop());
-        }
+        state.setPosition(state.getPosition() - 1);
+        state.getInputStack().push(state.getWorkingStack().pop());
     }
 
     public void anotherTry() {
-        if (isProductionString(state.getInputStack().peek())) {
-            
-            List<SyntacticalRule> syntacticalRules = grammar.getSyntacticalRules();
-            int ruleIndex = parseProductionString(state.getWorkingStack().peek());
-            
-            syntacticalRules.get(ruleIndex).getRightSide().forEach(symbol -> {
-                state.getInputStack().pop();
-            });
-            state.workingStack.pop();
-            
-            IntStream.range(ruleIndex + 1, syntacticalRules.size())
-            .filter(index -> syntacticalRules.get(index).getLeftSide().equals(syntacticalRules.get(ruleIndex).getLeftSide()))
-            .findFirst().ifPresentOrElse(
-                newRuleIndex -> {
-                    state.getWorkingStack().push("-"+newRuleIndex+"-");
+        List<SyntacticalRule> syntacticalRules = grammar.getSyntacticalRules();
+        int ruleIndex = parseProductionString(state.getWorkingStack().peek());
 
-                    syntacticalRules.get(newRuleIndex).getRightSide().forEach(symbol -> {
-                        state.getInputStack().push(symbol);
-                    });
-                },
-                () -> {
-                    if(state.getPosition() == 1 
-                    && state.getInputStack().peek().equals(grammar.getSyntacticalConstruct())){
-                        state.setStatus("e");
-                    }
-                    else{
-                        state.getInputStack().push(syntacticalRules.get(ruleIndex).getLeftSide());
-                    }
-                }
-            );
+        syntacticalRules.get(ruleIndex).getRightSide().forEach(symbol -> {
+            state.getInputStack().pop();
+        });
+        state.workingStack.pop();
 
+        IntStream.range(ruleIndex + 1, syntacticalRules.size())
+                .filter(index -> syntacticalRules.get(index).getLeftSide().equals(syntacticalRules.get(ruleIndex).getLeftSide()))
+                .findFirst()
+                .ifPresentOrElse(
+                        newRuleIndex -> { useNewProduction(syntacticalRules, newRuleIndex); },
+                        () -> { markAsError(syntacticalRules, ruleIndex); }
+                        );
+    }
+
+    public void success() {
+        state.setStatus("f");
+    }
+
+    private void markAsError(List<SyntacticalRule> syntacticalRules, int ruleIndex) {
+        if(state.getPosition() == 1
+        && state.getInputStack().peek().equals(grammar.getSyntacticalConstruct())){
+            state.setStatus("e");
         }
+        else{
+            state.getInputStack().push(syntacticalRules.get(ruleIndex).getLeftSide());
+        }
+    }
+
+    private void useNewProduction(List<SyntacticalRule> syntacticalRules, int newRuleIndex) {
+        state.getWorkingStack().push("-"+ newRuleIndex +"-");
+
+        syntacticalRules.get(newRuleIndex).getRightSide().forEach(symbol -> {
+            state.getInputStack().push(symbol);
+        });
     }
 
     private boolean isProductionString(String str) {
@@ -157,10 +145,5 @@ public class FormalModel {
     private int parseProductionString(String str) {
         return Integer.parseInt(str.subSequence(1, state.getWorkingStack().peek().length()-1).toString());
     }
-
-    public void success() {
-        state.setStatus("f");
-    }
-
 
 }
