@@ -5,6 +5,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -45,16 +46,24 @@ public class Grammar {
     void readFiniteAutomataFromFile(String fileName) {
         try {
             List<String> fileList = Files.readAllLines(Paths.get(fileName), StandardCharsets.UTF_8);
+
             nonTerminals = Arrays.stream(fileList.get(0).split(" ")).collect(Collectors.toSet());
+
             terminals = Arrays.stream(fileList.get(1).split(" ")).collect(Collectors.toSet());
+
             syntacticalRules = Arrays.stream(fileList.get(2).split(" ")).map(transitionString -> {
                 String[] ruleSplit = transitionString.split("-");
                 SyntacticalRule syntacticalRule = new SyntacticalRule();
                 syntacticalRule.setLeftSide(ruleSplit[0]);
                 syntacticalRule.setRightSide(ruleSplit[1].codePoints()
                         .mapToObj(c -> String.valueOf((char) c)).collect(Collectors.toList()));
+
+                Collections.reverse(syntacticalRule.getRightSide());
+
                 return syntacticalRule;
             }).collect(Collectors.toList());
+
+            syntacticalConstruct = fileList.get(3);
         } catch (IOException e) {
             e.printStackTrace();
         }
