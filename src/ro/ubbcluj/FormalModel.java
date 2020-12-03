@@ -71,8 +71,8 @@ public class FormalModel {
         List<Grammar.SyntacticalRule> syntacticalRules = grammar.getSyntacticalRules();
 
         OptionalInt indexOfRule = IntStream.range(0, syntacticalRules.size())
-        .filter(index -> Objects.equals(syntacticalRules.get(index).getLeftSide(), state.getInputStack().peek()))
-        .findFirst();
+                .filter(index -> Objects.equals(syntacticalRules.get(index).getLeftSide(), state.getInputStack().peek()))
+                .findFirst();
 
         Grammar.SyntacticalRule ruleToBeUsed = syntacticalRules.get(indexOfRule.getAsInt());
 
@@ -80,7 +80,7 @@ public class FormalModel {
             state.getInputStack().push(symbol);
         });
 
-        state.getInputStack().push("-"+indexOfRule+"-");
+        state.getWorkingStack().push("-" + indexOfRule + "-");
     }
 
     public void advance() {
@@ -111,9 +111,13 @@ public class FormalModel {
                 .filter(index -> syntacticalRules.get(index).getLeftSide().equals(syntacticalRules.get(ruleIndex).getLeftSide()))
                 .findFirst()
                 .ifPresentOrElse(
-                        newRuleIndex -> { useNewProduction(syntacticalRules, newRuleIndex); },
-                        () -> { markAsError(syntacticalRules, ruleIndex); }
-                        );
+                        newRuleIndex -> {
+                            useNewProduction(syntacticalRules, newRuleIndex);
+                        },
+                        () -> {
+                            markAsError(syntacticalRules, ruleIndex);
+                        }
+                );
     }
 
     public void success() {
@@ -121,17 +125,16 @@ public class FormalModel {
     }
 
     private void markAsError(List<SyntacticalRule> syntacticalRules, int ruleIndex) {
-        if(state.getPosition() == 1
-        && state.getInputStack().peek().equals(grammar.getSyntacticalConstruct())){
+        if (state.getPosition() == 1
+                && state.getInputStack().peek().equals(grammar.getSyntacticalConstruct())) {
             state.setStatus("e");
-        }
-        else{
+        } else {
             state.getInputStack().push(syntacticalRules.get(ruleIndex).getLeftSide());
         }
     }
 
     private void useNewProduction(List<SyntacticalRule> syntacticalRules, int newRuleIndex) {
-        state.getWorkingStack().push("-"+ newRuleIndex +"-");
+        state.getWorkingStack().push("-" + newRuleIndex + "-");
 
         syntacticalRules.get(newRuleIndex).getRightSide().forEach(symbol -> {
             state.getInputStack().push(symbol);
@@ -143,7 +146,7 @@ public class FormalModel {
     }
 
     private int parseProductionString(String str) {
-        return Integer.parseInt(str.subSequence(1, state.getWorkingStack().peek().length()-1).toString());
+        return Integer.parseInt(str.subSequence(1, state.getWorkingStack().peek().length() - 1).toString());
     }
 
 }
