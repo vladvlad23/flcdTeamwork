@@ -19,6 +19,38 @@ public class FormalModel {
         this.inputString = inputString;
     }
 
+
+    public boolean parseInput() {
+        while (!Objects.equals(state.getStatus(), "t") &&
+                !Objects.equals(state.getStatus(), "e")) {
+
+            if (isContinueStatus()) {
+                if (isFinalValidState()) {
+                    success();
+                } else if (isTopInputStackNonTerminal()) {
+                    expand();
+                } else if (isTopInputStackTerminal() && inputStackMatchesInputString()) {
+                    advance();
+                } else {
+                    momentaryInsuccess();
+                }
+            } else if (isBackStatus()) {
+                if (isTopWorkingStackTerminal()) {
+                    back();
+                }
+            } else if (isProductionString(state.getInputStack().peek())) {
+                anotherTry(); //todo double-triple-check for errors
+            } else if (state.getPosition() == 1 &&
+                    isTopInputStackNonTerminal() &&
+                    Objects.equals(state.getInputStack().peek(), grammar.getSyntacticalConstruct())) {
+                //todo Andu vrea sa faca incantatii, vrajitorii, magii cu if-uri si construct-uri
+
+            }
+        }
+        return false;
+    }
+
+
     class State {
         private String status;
         private int position;
@@ -64,6 +96,35 @@ public class FormalModel {
         public void setInputStack(Stack<String> inputStack) {
             this.inputStack = inputStack;
         }
+    }
+
+    private boolean isContinueStatus() {
+        return Objects.equals(state.getStatus(), "q");
+    }
+
+    private boolean isBackStatus() {
+        return state.getStatus().equals("r");
+    }
+
+    private boolean isTopWorkingStackTerminal() {
+        return grammar.getTerminals().contains(state.getWorkingStack().peek());
+    }
+
+    private boolean inputStackMatchesInputString() {
+        return state.getInputStack().peek().equals(inputString.get(state.getPosition()));
+    }
+
+    private boolean isTopInputStackNonTerminal() {
+        return grammar.getNonTerminals().contains(state.getInputStack().peek());
+    }
+
+    private boolean isTopInputStackTerminal() {
+        return grammar.getTerminals().contains(state.getInputStack().peek());
+    }
+
+    private boolean isFinalValidState() {
+        return state.getInputStack().isEmpty() &&
+                state.getPosition() == inputString.size() + 1;
     }
 
 
