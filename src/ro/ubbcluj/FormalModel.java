@@ -21,7 +21,7 @@ public class FormalModel {
 
 
     public boolean parseInput() {
-        while (!Objects.equals(state.getStatus(), "t") &&
+        while (!Objects.equals(state.getStatus(), "f") &&
                 !Objects.equals(state.getStatus(), "e")) {
 
             if (isContinueStatus()) {
@@ -37,14 +37,8 @@ public class FormalModel {
             } else if (isBackStatus()) {
                 if (isTopWorkingStackTerminal()) {
                     back();
-                }
-            } else if (isProductionString(state.getInputStack().peek())) {
-                anotherTry(); //todo double-triple-check for errors
-            } else if (state.getPosition() == 1 &&
-                    isTopInputStackNonTerminal() &&
-                    Objects.equals(state.getInputStack().peek(), grammar.getSyntacticalConstruct())) {
-                //todo Andu vrea sa faca incantatii, vrajitorii, magii cu if-uri si construct-uri
-
+                } else
+                    anotherTry();
             }
         }
         return false;
@@ -103,7 +97,7 @@ public class FormalModel {
     }
 
     private boolean isBackStatus() {
-        return state.getStatus().equals("r");
+        return state.getStatus().equals("b");
     }
 
     private boolean isTopWorkingStackTerminal() {
@@ -137,9 +131,7 @@ public class FormalModel {
 
         Grammar.SyntacticalRule ruleToBeUsed = syntacticalRules.get(indexOfRule.getAsInt());
 
-        ruleToBeUsed.getRightSide().forEach(symbol -> {
-            state.getInputStack().push(symbol);
-        });
+        ruleToBeUsed.getRightSide().forEach(symbol -> state.getInputStack().push(symbol));
 
         state.getWorkingStack().push("-" + indexOfRule + "-");
     }
@@ -163,21 +155,15 @@ public class FormalModel {
         List<SyntacticalRule> syntacticalRules = grammar.getSyntacticalRules();
         int ruleIndex = parseProductionString(state.getWorkingStack().peek());
 
-        syntacticalRules.get(ruleIndex).getRightSide().forEach(symbol -> {
-            state.getInputStack().pop();
-        });
+        syntacticalRules.get(ruleIndex).getRightSide().forEach(symbol -> state.getInputStack().pop());
         state.workingStack.pop();
 
         IntStream.range(ruleIndex + 1, syntacticalRules.size())
                 .filter(index -> syntacticalRules.get(index).getLeftSide().equals(syntacticalRules.get(ruleIndex).getLeftSide()))
                 .findFirst()
                 .ifPresentOrElse(
-                        newRuleIndex -> {
-                            useNewProduction(syntacticalRules, newRuleIndex);
-                        },
-                        () -> {
-                            markAsError(syntacticalRules, ruleIndex);
-                        }
+                        newRuleIndex -> useNewProduction(syntacticalRules, newRuleIndex),
+                        () -> treatFailure(syntacticalRules, ruleIndex)
                 );
     }
 
@@ -185,21 +171,17 @@ public class FormalModel {
         state.setStatus("f");
     }
 
-    private void markAsError(List<SyntacticalRule> syntacticalRules, int ruleIndex) {
-        if (state.getPosition() == 1
-                && state.getInputStack().peek().equals(grammar.getSyntacticalConstruct())) {
+    private void treatFailure(List<SyntacticalRule> syntacticalRules, int ruleIndex) {
+        if (state.getPosition() == 1 && state.getInputStack().peek().equals(grammar.getSyntacticalConstruct()))
             state.setStatus("e");
-        } else {
+        else
             state.getInputStack().push(syntacticalRules.get(ruleIndex).getLeftSide());
-        }
     }
 
     private void useNewProduction(List<SyntacticalRule> syntacticalRules, int newRuleIndex) {
         state.getWorkingStack().push("-" + newRuleIndex + "-");
 
-        syntacticalRules.get(newRuleIndex).getRightSide().forEach(symbol -> {
-            state.getInputStack().push(symbol);
-        });
+        syntacticalRules.get(newRuleIndex).getRightSide().forEach(symbol -> state.getInputStack().push(symbol));
     }
 
     private boolean isProductionString(String str) {
