@@ -1,47 +1,21 @@
 package ro.ubbcluj;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.OptionalInt;
-import java.util.Stack;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import ro.ubbcluj.Grammar.SyntacticalRule;
 
 public class FormalModel {
     private final Grammar grammar;
-    private final State state;
+    public final State state; //todo sue Andu
     private List<String> inputString;
+    public ParserOutput output;
 
     public FormalModel(Grammar grammar, List<String> inputString) {
         this.grammar = grammar;
         state = new State();
         this.inputString = inputString;
-    }
-
-
-    public boolean parseInput() {
-        while (!Objects.equals(state.getStatus(), "f") &&
-                !Objects.equals(state.getStatus(), "e")) {
-
-            if (isContinueStatus()) {
-                if (isFinalValidState()) {
-                    success();
-                } else if (isTopInputStackNonTerminal()) {
-                    expand();
-                } else if (isTopInputStackTerminal() && inputStackMatchesInputString()) {
-                    advance();
-                } else {
-                    momentaryInsuccess();
-                }
-            } else if (isBackStatus()) {
-                if (isTopWorkingStackTerminal()) {
-                    back();
-                } else
-                    anotherTry();
-            }
-        }
-        return false;
     }
 
 
@@ -53,7 +27,7 @@ public class FormalModel {
 
         public State() {
             this.status = "q";
-            this.position = 1;
+            this.position = 0;
             workingStack = new Stack<>();
             inputStack = new Stack<>();
             inputStack.push(grammar.getSyntacticalConstruct());
@@ -92,6 +66,118 @@ public class FormalModel {
         }
     }
 
+    class ParserOutput {
+        private int createIndex = 0;
+
+        private Node root;
+
+        class Node {
+            private List<Node> children;
+
+            private String information;
+
+            @Override
+            public String toString() {
+                return getString(1);
+            }
+
+            private String getString(int depth) {
+                StringBuilder sb = new StringBuilder();
+
+                sb.append(information).append("\n");
+
+                if(children == null) return sb.toString();
+                String spaceyBoy = IntStream.range(0, depth).mapToObj(i -> "   ").collect(Collectors.joining(""));
+
+                children.forEach(child ->sb.append(spaceyBoy).append(child.getString(depth + 1)));
+
+                return sb.toString();
+            }
+
+            public boolean isLeaf() {
+                return children.size() == 0;
+            }
+        }
+
+        public void createTree() {
+            if (!state.getStatus().equals("f"))
+                throw new RuntimeException("Wrong Status.");
+
+            root = buildTree(state.getWorkingStack());
+        }
+
+        private Node buildTree(Stack<String> workingStack) {
+            String topItem = workingStack.get(createIndex);
+
+            createIndex++;
+            if (isProductionString(topItem)) {
+                SyntacticalRule production = grammar.getSyntacticalRules().get(parseProductionString(topItem));
+
+                Node newBoy = new Node();
+                newBoy.information = production.getLeftSide();
+                newBoy.children = new ArrayList<>();
+
+                production.getRightSide().forEach(item -> newBoy.children.add(buildTree(workingStack)));
+
+                return newBoy;
+            } else {
+                Node newBoy = new Node();
+
+                newBoy.information = topItem;
+
+                return newBoy;
+            }
+        }
+
+        private List<String> traverseTree(Node node) { //todo maybe iterative?
+            if (node.isLeaf()) {
+                return new ArrayList<>(Collections.singleton(node.information));
+            }
+            List<String> childList = new ArrayList<>();
+            for (Node child : node.children) {
+                childList.addAll(traverseTree(child));
+            }
+            return childList;
+        }
+
+        public List<String> getFrontier() {
+            return traverseTree(root);
+        }
+
+        @Override
+        public String toString() {
+            return root.toString();
+        }
+    }
+
+    public void parseInput() {
+        while (!Objects.equals(state.getStatus(), "f") &&
+                !Objects.equals(state.getStatus(), "e")) {
+
+            if (isContinueStatus()) {
+                if (isFinalValidState()) {
+                    success();
+                } else if (isTopInputStackNonTerminal()) {
+                    expand();
+                } else if (isTopInputStackTerminal() && inputStackMatchesInputString()) {
+                    advance();
+                } else {
+                    momentaryInsuccess();
+                }
+            } else if (isBackStatus()) {
+                if (isTopWorkingStackTerminal()) {
+                    back();
+                } else
+                    anotherTry();
+            }
+        }
+    }
+
+    public void createOutput() {
+        output = new ParserOutput();
+        output.createTree();
+    }
+
     private boolean isContinueStatus() {
         return Objects.equals(state.getStatus(), "q");
     }
@@ -101,35 +187,43 @@ public class FormalModel {
     }
 
     private boolean isTopWorkingStackTerminal() {
+        if (state.getWorkingStack().empty()) return false;
         return grammar.getTerminals().contains(state.getWorkingStack().peek());
     }
 
     private boolean inputStackMatchesInputString() {
+        if (state.getInputStack().empty()) return false;
+        if (state.getPosition() == inputString.size()) return false;
         return state.getInputStack().peek().equals(inputString.get(state.getPosition()));
     }
 
     private boolean isTopInputStackNonTerminal() {
+        if (state.getInputStack().empty()) return false;
         return grammar.getNonTerminals().contains(state.getInputStack().peek());
     }
 
     private boolean isTopInputStackTerminal() {
+        if (state.getInputStack().empty()) return false;
         return grammar.getTerminals().contains(state.getInputStack().peek());
     }
 
     private boolean isFinalValidState() {
         return state.getInputStack().isEmpty() &&
-                state.getPosition() == inputString.size() + 1;
+                state.getPosition() == inputString.size();
     }
 
 
     public void expand() {
         List<Grammar.SyntacticalRule> syntacticalRules = grammar.getSyntacticalRules();
 
-        OptionalInt indexOfRule = IntStream.range(0, syntacticalRules.size())
+        int indexOfRule = IntStream.range(0, syntacticalRules.size())
                 .filter(index -> Objects.equals(syntacticalRules.get(index).getLeftSide(), state.getInputStack().peek()))
-                .findFirst();
+                .findFirst().getAsInt(); //todo fix this warning
 
-        Grammar.SyntacticalRule ruleToBeUsed = syntacticalRules.get(indexOfRule.getAsInt());
+
+        Grammar.SyntacticalRule ruleToBeUsed = syntacticalRules.get(indexOfRule);
+
+        state.getInputStack().pop();
 
         ruleToBeUsed.getRightSide().forEach(symbol -> state.getInputStack().push(symbol));
 
@@ -153,6 +247,14 @@ public class FormalModel {
 
     public void anotherTry() {
         List<SyntacticalRule> syntacticalRules = grammar.getSyntacticalRules();
+
+        if (!state.getInputStack().empty()
+                && state.getPosition() == 0
+                && state.getInputStack().peek().equals(grammar.getSyntacticalConstruct())) {
+            state.setStatus("e");
+            return;
+        }
+
         int ruleIndex = parseProductionString(state.getWorkingStack().peek());
 
         syntacticalRules.get(ruleIndex).getRightSide().forEach(symbol -> state.getInputStack().pop());
@@ -163,7 +265,7 @@ public class FormalModel {
                 .findFirst()
                 .ifPresentOrElse(
                         newRuleIndex -> useNewProduction(syntacticalRules, newRuleIndex),
-                        () -> treatFailure(syntacticalRules, ruleIndex)
+                        () -> state.getInputStack().push(syntacticalRules.get(ruleIndex).getLeftSide())
                 );
     }
 
@@ -171,14 +273,9 @@ public class FormalModel {
         state.setStatus("f");
     }
 
-    private void treatFailure(List<SyntacticalRule> syntacticalRules, int ruleIndex) {
-        if (state.getPosition() == 1 && state.getInputStack().peek().equals(grammar.getSyntacticalConstruct()))
-            state.setStatus("e");
-        else
-            state.getInputStack().push(syntacticalRules.get(ruleIndex).getLeftSide());
-    }
-
     private void useNewProduction(List<SyntacticalRule> syntacticalRules, int newRuleIndex) {
+        state.setStatus("q");
+
         state.getWorkingStack().push("-" + newRuleIndex + "-");
 
         syntacticalRules.get(newRuleIndex).getRightSide().forEach(symbol -> state.getInputStack().push(symbol));
@@ -189,7 +286,7 @@ public class FormalModel {
     }
 
     private int parseProductionString(String str) {
-        return Integer.parseInt(str.subSequence(1, state.getWorkingStack().peek().length() - 1).toString());
+        return Integer.parseInt(str.subSequence(1, str.length() - 1).toString());
     }
 
 }
