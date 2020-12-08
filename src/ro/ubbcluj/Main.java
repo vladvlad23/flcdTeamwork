@@ -13,5 +13,6 @@ public class Main {
         fm.parseInput();
         fm.createOutput();
         System.out.println(fm.output);
+        System.out.println(fm.getOutputAsTable());
     }
 }
