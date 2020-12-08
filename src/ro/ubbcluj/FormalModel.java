@@ -87,10 +87,10 @@ public class FormalModel {
             private String getString(int depth) {
                 StringBuilder sb = new StringBuilder();
 
-                sb.append(information).append("\n");
+                sb.append(information).append("(").append(number).append(")\n");
 
                 if(children == null) return sb.toString();
-                String spaceyBoy = IntStream.range(0, depth).mapToObj(i -> "   ").collect(Collectors.joining(""));
+                String spaceyBoy = IntStream.range(0, depth).mapToObj(i -> "      ").collect(Collectors.joining(""));
 
                 children.forEach(child ->sb.append(spaceyBoy).append(child.getString(depth + 1)));
 
