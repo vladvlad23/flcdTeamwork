@@ -1,5 +1,6 @@
 package ro.ubbcluj;
 
+import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -76,6 +77,8 @@ public class FormalModel {
 
             private String information;
 
+            private int number;
+
             @Override
             public String toString() {
                 return getString(1);
@@ -84,15 +87,49 @@ public class FormalModel {
             private String getString(int depth) {
                 StringBuilder sb = new StringBuilder();
 
-                sb.append(information).append("\n");
+                sb.append(information).append("(").append(number).append(")\n");
 
                 if(children == null) return sb.toString();
-                String spaceyBoy = IntStream.range(0, depth).mapToObj(i -> "   ").collect(Collectors.joining(""));
+                String spaceyBoy = IntStream.range(0, depth).mapToObj(i -> "      ").collect(Collectors.joining(""));
 
                 children.forEach(child ->sb.append(spaceyBoy).append(child.getString(depth + 1)));
 
                 return sb.toString();
             }
+
+            private String getString2(int daddyNumber, int siblingNumber) {
+                StringBuilder sb = new StringBuilder();
+
+                if(number == 1)
+                    sb.append(number).append(" ").append(information).append(" ").append("-").append(" ").append("-").append("\n");
+                else {
+                    sb.append(number).append(" ").append(information).append(" ").append(daddyNumber).append(" ");
+                    if(siblingNumber != -1)
+                        sb.append(siblingNumber);
+                    else
+                        sb.append("-");
+                    sb.append("\n");
+                }
+                if(children == null) return sb.toString();
+
+                int sib = -1;
+                for (int i = 0; i < children.size(); i++) {
+                    if(i != 0) sib = children.get(i - 1).number;
+
+                    sb.append(children.get(i).getString2(number, sib));
+                }
+
+                return sb.toString();
+            }
+
+//            public void writeResultToFile(){
+//                try{
+//                    FileWriter writer = new FileWriter("out.txt");
+//                    writer.write(this.getString2(0,))
+//                }
+//                return "";
+//            }
+
 
             public boolean isLeaf() {
                 return children.size() == 0;
@@ -115,6 +152,7 @@ public class FormalModel {
 
                 Node newBoy = new Node();
                 newBoy.information = production.getLeftSide();
+                newBoy.number = createIndex;
                 newBoy.children = new ArrayList<>();
 
                 production.getRightSide().forEach(item -> newBoy.children.add(buildTree(workingStack)));
@@ -124,6 +162,7 @@ public class FormalModel {
                 Node newBoy = new Node();
 
                 newBoy.information = topItem;
+                newBoy.number = createIndex;
 
                 return newBoy;
             }
@@ -176,6 +215,10 @@ public class FormalModel {
     public void createOutput() {
         output = new ParserOutput();
         output.createTree();
+    }
+
+    public String getOutputAsTable(){
+        return output.root.getString2(0, -1);
     }
 
     private boolean isContinueStatus() {

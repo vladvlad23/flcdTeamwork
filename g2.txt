@@ -1,0 +1,5 @@
+S A
+1 0 define integer string char
+S
+S-define 1 A
+A-integer|string|char
