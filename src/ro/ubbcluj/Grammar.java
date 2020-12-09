@@ -55,7 +55,7 @@ public class Grammar {
 
             for (int i = 3; i < fileList.size(); i++) {
 
-                String[] ruleSides = fileList.get(i).split("-");
+                String[] ruleSides = fileList.get(i).split("->");
 
                 syntacticalRules.addAll(
                 Arrays.stream(ruleSides[1].split("\\|")).map(rightSideOfRule ->{

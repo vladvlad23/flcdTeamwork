@@ -1,5 +1,23 @@
-S A
-1 0 define integer string char
-S
-S-define 1 A
-A-integer|string|char
+_S _CS _ST _EX _VE _AE _SE _ASG _DS _VE _BE _BSG _TYPE _IS _PS _RS _WS _SS _AS _DS-SPAM
+1 0 define integer const string char execute done while if print read blueprint [ ] { } | + - = < > == * / != ( )
+_S
+_S->_CS
+_CS->_ST|_ST _CS
+_ST->_DS|_IS|_PS|_RS|_WS|_SS|_AS|_EX
+_EX->_AE|_SE|_VE|_BE
+_VE->0|1
+_AE->_VE _ASG _AE|_VE
+_SE->_VE + _SE|_VE
+_ASG->+|-|*|/
+_BE->_VE _BSG _BE|_VE
+_BSG-><|>|==|!=
+_DS->define _VE _TYPE|define const _VE _TYPE
+_TYPE->integer|string|char
+_IS->if ( _BE ) { _CS }
+_PS->print ( _SE )
+_RS->read ( _VE )
+_WS->while ( _BE ) { _CS }
+_SS->blueprint 1 { _DS-SPAM }
+_DS-SPAM->_DS _DS-SPAM|_DS
+_AS->_VE = _VE
+_BSG-><|>|==

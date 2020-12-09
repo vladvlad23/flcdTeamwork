@@ -137,8 +137,10 @@ public class FormalModel {
         }
 
         public void createTree() {
-            if (!state.getStatus().equals("f"))
-                throw new RuntimeException("Wrong Status.");
+            if (!state.getStatus().equals("f")) {
+                System.out.println("Failed to parse");
+                System.exit(0);
+            }
 
             root = buildTree(state.getWorkingStack());
         }
@@ -325,7 +327,7 @@ public class FormalModel {
     }
 
     private boolean isProductionString(String str) {
-        return str.matches("-[0-9]-");
+        return str.matches("-[0-9]+-");
     }
 
     private int parseProductionString(String str) {
