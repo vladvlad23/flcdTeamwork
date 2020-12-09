@@ -1,0 +1,16 @@
+define 1 integer
+define const 1 string
+
+blueprint 1 {
+    define 1 string
+    define 1 char
+}
+
+while ( 1 < 0 ) {
+    print ( 0 + 0 )
+}
+
+if ( 0 > 0 ) {
+    read ( 1 )
+    1 = 0
+}
