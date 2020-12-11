@@ -1,21 +1,32 @@
 package ro.ubbcluj;
 
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 public class Main {
 
     public static void main(String[] args) {
-//        testGrammarProcessing();
-        showGrammar();
+
+        try {
+            FileWriter fr1 = new FileWriter("out2.txt");
+            FileWriter fr2 = new FileWriter("out1.txt");
+
+            fr1.append(showGrammar());
+            fr2.append(showGrammar2());
+
+            fr1.close();
+            fr2.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-    public static void showGrammar(){
+    public static String showGrammar() throws IOException {
         Grammar grammar = new Grammar();
         grammar.readFiniteAutomataFromFile("g2.txt");
 
@@ -23,8 +34,19 @@ public class Main {
         FormalModel fm = new FormalModel(grammar, programProcessResult);
         fm.parseInput();
         fm.createOutput();
-        System.out.println(fm.output);
-        System.out.println(fm.getOutputAsTable());
+        return fm.output.toString() + " " +fm.getOutputAsTable();
+    }
+
+    public static String showGrammar2() throws IOException {
+        Grammar grammar = new Grammar();
+        grammar.readFiniteAutomataFromFile("g1.txt");
+
+        List<String> programProcessResult = Arrays.asList("a", "a", "c", "b", "c");
+        FormalModel fm = new FormalModel(grammar, programProcessResult);
+        fm.parseInput();
+        fm.createOutput();
+
+        return fm.output.toString() + " " +fm.getOutputAsTable();
     }
 
     private static List<String> processProgramFromFile(String fileName) {

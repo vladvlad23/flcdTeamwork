@@ -1,0 +1,1 @@
+typeSearchIndex = [{"l":"All Classes","u":"allclasses-index.html"},{"p":"ro.ubbcluj","l":"FormalModel"},{"p":"ro.ubbcluj","l":"Grammar"},{"p":"ro.ubbcluj","l":"Main"}];updateSearchResults();
