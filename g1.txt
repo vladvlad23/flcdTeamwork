@@ -1,4 +1,4 @@
-S
+_S
 a b c
-S
-S-a S b S|a S|c
+_S
+_S->a _S b _S|a _S|c

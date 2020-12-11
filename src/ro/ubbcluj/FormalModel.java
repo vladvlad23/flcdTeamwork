@@ -1,6 +1,7 @@
 package ro.ubbcluj;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -121,16 +122,6 @@ public class FormalModel {
 
                 return sb.toString();
             }
-
-//            public void writeResultToFile(){
-//                try{
-//                    FileWriter writer = new FileWriter("out.txt");
-//                    writer.write(this.getString2(0,))
-//                }
-//                return "";
-//            }
-
-
             public boolean isLeaf() {
                 return children.size() == 0;
             }
@@ -170,7 +161,7 @@ public class FormalModel {
             }
         }
 
-        private List<String> traverseTree(Node node) { //todo maybe iterative?
+        private List<String> traverseTree(Node node) {
             if (node.isLeaf()) {
                 return new ArrayList<>(Collections.singleton(node.information));
             }
@@ -263,7 +254,7 @@ public class FormalModel {
 
         int indexOfRule = IntStream.range(0, syntacticalRules.size())
                 .filter(index -> Objects.equals(syntacticalRules.get(index).getLeftSide(), state.getInputStack().peek()))
-                .findFirst().getAsInt(); //todo fix this warning
+                .findFirst().getAsInt();
 
 
         Grammar.SyntacticalRule ruleToBeUsed = syntacticalRules.get(indexOfRule);
